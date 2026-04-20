@@ -99,7 +99,7 @@
   - Tổng hợp báo cáo blueprint, grading-evidence
   - Chuẩn hóa tài liệu, cập nhật tiến độ nhóm
   - Chuẩn bị demo, trình bày kết quả
-- [EVIDENCE_LINK]: https://github.com/khanhnguyen0825/Lab13-Observability/commit/jkl012
+- [EVIDENCE_LINK]: https://github.com/khanhnguyen0825/Lab13-Observability/commit/fad565ac36a78975ebd39d774e05689ccb88a6cc
 
 ---
 
