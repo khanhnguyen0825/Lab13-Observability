@@ -25,42 +25,46 @@ class LabAgent:
         self.model = model
         self.llm = FakeLLM(model=model)
 
-    @observe()
+    @observe(as_type="generation")
     def run(self, user_id: str, feature: str, session_id: str, message: str) -> AgentResult:
-        started = time.perf_counter()
-        docs = retrieve(message)
-        prompt = f"Feature={feature}\nDocs={docs}\nQuestion={message}"
-        response = self.llm.generate(prompt)
-        quality_score = self._heuristic_quality(message, response.text, docs)
-        latency_ms = int((time.perf_counter() - started) * 1000)
-        cost_usd = self._estimate_cost(response.usage.input_tokens, response.usage.output_tokens)
-
-        langfuse_context.update_current_trace(
+        from langfuse import propagate_attributes
+        
+        # In v4, we use propagate_attributes as a context manager for trace-level metadata
+        with propagate_attributes(
             user_id=hash_user_id(user_id),
             session_id=session_id,
             tags=["lab", feature, self.model],
-        )
-        langfuse_context.update_current_observation(
-            metadata={"doc_count": len(docs), "query_preview": summarize_text(message)},
-            usage_details={"input": response.usage.input_tokens, "output": response.usage.output_tokens},
-        )
+        ):
+            started = time.perf_counter()
+            docs = retrieve(message)
+            prompt = f"Feature={feature}\nDocs={docs}\nQuestion={message}"
+            response = self.llm.generate(prompt)
+            quality_score = self._heuristic_quality(message, response.text, docs)
+            latency_ms = int((time.perf_counter() - started) * 1000)
+            cost_usd = self._estimate_cost(response.usage.input_tokens, response.usage.output_tokens)
 
-        metrics.record_request(
-            latency_ms=latency_ms,
-            cost_usd=cost_usd,
-            tokens_in=response.usage.input_tokens,
-            tokens_out=response.usage.output_tokens,
-            quality_score=quality_score,
-        )
+            # Update span-level metadata and usage
+            langfuse_context.update_current_observation(
+                metadata={"doc_count": len(docs), "query_preview": summarize_text(message)},
+                usage={"input": response.usage.input_tokens, "output": response.usage.output_tokens},
+            )
 
-        return AgentResult(
-            answer=response.text,
-            latency_ms=latency_ms,
-            tokens_in=response.usage.input_tokens,
-            tokens_out=response.usage.output_tokens,
-            cost_usd=cost_usd,
-            quality_score=quality_score,
-        )
+            metrics.record_request(
+                latency_ms=latency_ms,
+                cost_usd=cost_usd,
+                tokens_in=response.usage.input_tokens,
+                tokens_out=response.usage.output_tokens,
+                quality_score=quality_score,
+            )
+
+            return AgentResult(
+                answer=response.text,
+                latency_ms=latency_ms,
+                tokens_in=response.usage.input_tokens,
+                tokens_out=response.usage.output_tokens,
+                cost_usd=cost_usd,
+                quality_score=quality_score,
+            )
 
     def _estimate_cost(self, tokens_in: int, tokens_out: int) -> float:
         input_cost = (tokens_in / 1_000_000) * 3
