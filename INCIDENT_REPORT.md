@@ -1,4 +1,4 @@
-# 🔴 INCIDENT SIMULATION REPORT (Member 4)
+# INCIDENT SIMULATION REPORT (Member 4)
 
 ## Executive Summary
 Thành công kiểm thử 2 kịch bản incident (RAG Slow, Tool Fail/LLM Fault) và xác nhận hệ thống ghi log chi tiết để phát hiện root cause.
@@ -39,13 +39,13 @@ Thành công kiểm thử 2 kịch bản incident (RAG Slow, Tool Fail/LLM Fault
 ```bash
 .venv\Scripts\python scripts/inject_incident.py --scenario rag_slow --disable
 ```
-✅ Verified: Latency returned to baseline (~180ms)
+Verified: Latency returned to baseline (~180ms)
 
 ### Prevention Recommendations:
-1. ⚠️ **Add timeout**: 2s max for RAG fetch, fallback to cached results
-2. 📊 **Monitor**: Set alert when P95 latency > 1500ms
-3. 🔄 **Fallback strategy**: Use LLM-only mode if RAG unavailable
-4. 📈 **Rate limiting**: Throttle concurrent RAG requests
+1. **Add timeout**: 2s max for RAG fetch, fallback to cached results
+2. **Monitor**: Set alert when P95 latency > 1500ms
+3. **Fallback strategy**: Use LLM-only mode if RAG unavailable
+4. **Rate limiting**: Throttle concurrent RAG requests
 
 ---
 
@@ -84,13 +84,13 @@ Thành công kiểm thử 2 kịch bản incident (RAG Slow, Tool Fail/LLM Fault
 ```bash
 .venv\Scripts\python scripts/inject_incident.py --scenario tool_fail --disable
 ```
-✅ Verified: All subsequent requests returned to success (status 200)
+Verified: All subsequent requests returned to success (status 200)
 
 ### Prevention Recommendations:
-1. ⚠️ **Add retry logic**: Exponential backoff for tool failures
-2. 🛡️ **Circuit breaker**: Fail fast if LLM unavailable
-3. 📧 **Alert**: Trigger P1 alert on 3+ consecutive failures
-4. 🔍 **Logging**: Capture full stack trace for debugging
+1. **Add retry logic**: Exponential backoff for tool failures
+2. **Circuit breaker**: Fail fast if LLM unavailable
+3. **Alert**: Trigger P1 alert on 3+ consecutive failures
+4. **Logging**: Capture full stack trace for debugging
 
 ---
 
