@@ -38,3 +38,16 @@
   - shorten prompts
   - route easy requests to cheaper model
   - apply prompt cache
+
+## 4. Quality Score Drop
+- Severity: P2
+- Trigger: `quality_score_avg < 0.6 for 15m`
+- Impact: Người dùng nhận được phản hồi chất lượng kém liên tục.
+- First checks:
+  1. Xem lại log các câu hội thoại nhận điểm số thấp.
+  2. Kiểm tra xem RAG retrieval có trả về đúng context không.
+  3. Kiểm tra xem system prompt hoặc tham số model có bị thay đổi không.
+- Mitigation:
+  - Rollback lại system prompt gần nhất.
+  - Tạm thời chuyển model fallback nếu model chính trả lời sai nhiều.
+  - Fix lại kịch bản RAG retrieval.

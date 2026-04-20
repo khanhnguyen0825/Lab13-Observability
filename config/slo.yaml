@@ -4,13 +4,16 @@ slis:
   latency_p95_ms:
     objective: 3000
     target: 99.5
-    note: Replace with your group's target
+    rationale: "P95 < 3000ms đảm bảo 95% user không chờ quá lâu, phù hợp với chatbot interactive"
   error_rate_pct:
     objective: 2
     target: 99.0
+    rationale: "Error rate < 2% để giảm thiểu trải nghiệm lỗi, tối đa hoá uptime"
   daily_cost_usd:
     objective: 2.5
     target: 100.0
+    rationale: "Ngân sách hàng ngày 2.5 USD để tránh vượt quá chi phí"
   quality_score_avg:
     objective: 0.75
     target: 95.0
+    rationale: "Quality score > 0.75 để đảm bảo chất lượng phản hồi tốt"
