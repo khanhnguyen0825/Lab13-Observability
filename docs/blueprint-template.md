@@ -100,7 +100,6 @@
   - Chuẩn hóa tài liệu, cập nhật tiến độ nhóm
   - Chuẩn bị demo, trình bày kết quả
 - [EVIDENCE_LINK]: https://github.com/khanhnguyen0825/Lab13-Observability/commit/fad565ac36a78975ebd39d774e05689ccb88a6cc
-
 ---
 
 ## 6. Bonus Items (Optional)
