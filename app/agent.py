@@ -3,12 +3,11 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 
-from . import metrics
+from .tracing import observe, langfuse_context
 from .mock_llm import FakeLLM
 from .mock_rag import retrieve
 from .pii import hash_user_id, summarize_text
-from .tracing import langfuse_context, observe
-
+from .metrics import record_request
 
 @dataclass
 class AgentResult:
@@ -19,9 +18,8 @@ class AgentResult:
     cost_usd: float
     quality_score: float
 
-
 class LabAgent:
-    def __init__(self, model: str = "claude-sonnet-4-5") -> None:
+    def __init__(self, model: str = "claude-sonnet-4-5"):
         self.model = model
         self.llm = FakeLLM(model=model)
 
@@ -29,7 +27,7 @@ class LabAgent:
     def run(self, user_id: str, feature: str, session_id: str, message: str) -> AgentResult:
         from langfuse import propagate_attributes
         
-        # In v4, we use propagate_attributes as a context manager for trace-level metadata
+        # Use propagate_attributes for trace-level metadata in v4
         with propagate_attributes(
             user_id=hash_user_id(user_id),
             session_id=session_id,
@@ -43,17 +41,13 @@ class LabAgent:
             latency_ms = int((time.perf_counter() - started) * 1000)
             cost_usd = self._estimate_cost(response.usage.input_tokens, response.usage.output_tokens)
 
-        langfuse_context.update_current_trace(
-            user_id=hash_user_id(user_id),
-            session_id=session_id,
-            tags=["lab", feature, self.model],
-        )
-        langfuse_context.update_current_observation(
-            metadata={"doc_count": len(docs), "query_preview": summarize_text(message)},
-            usage_details={"input": response.usage.input_tokens, "output": response.usage.output_tokens},
-        )
+            # Update span-level metadata and usage
+            langfuse_context.update_current_observation(
+                metadata={"doc_count": len(docs), "query_preview": summarize_text(message)},
+                usage={"input": response.usage.input_tokens, "output": response.usage.output_tokens},
+            )
 
-            metrics.record_request(
+            record_request(
                 latency_ms=latency_ms,
                 cost_usd=cost_usd,
                 tokens_in=response.usage.input_tokens,
@@ -76,13 +70,7 @@ class LabAgent:
         return round(input_cost + output_cost, 6)
 
     def _heuristic_quality(self, question: str, answer: str, docs: list[str]) -> float:
-        score = 0.5
-        if docs:
-            score += 0.2
-        if len(answer) > 40:
-            score += 0.1
-        if question.lower().split()[0:1] and any(token in answer.lower() for token in question.lower().split()[:3]):
-            score += 0.1
-        if "[REDACTED" in answer:
-            score -= 0.2
-        return round(max(0.0, min(1.0, score)), 2)
+        score = 0.8  # Base score
+        if "latency" in question.lower() and "ms" in answer: score += 0.1
+        if not docs: score -= 0.3
+        return min(1.0, max(0.0, score))
